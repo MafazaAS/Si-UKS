@@ -18,14 +18,23 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
+    protected $table = 'users';
+
+    protected $primaryKey = 'id_users';
+
+    public $incrementing = true;
+
+    protected $keyType = 'int';
+
     protected $fillable = [
         'username',
         'email',
         'password',
-        'role'
+        'role',
     ];
 
     protected $hidden = [
         'password',
+        'remember_token',
     ];
 }

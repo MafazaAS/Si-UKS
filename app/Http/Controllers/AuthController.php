@@ -5,41 +5,64 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
     // 🔐 LOGIN
-    public function login(Request $r)
+    public function login(Request $request)
     {
-        $user = User::where('email', $r->email)->first();
+        $request->validate([
+    'email' => 'required|email',
+    'password' => 'required'
+    ]);
 
-        if (!$user || !Hash::check($r->password, $user->password)) {
-            return response()->json(['message'=>'Login gagal'],401);
-        }
+        $user = User::where('email', $request->email)->first();
 
-        $token = $user->createToken('token')->plainTextToken;
-
+    if (!$user || !Hash::check($request->password, $user->password)) {
         return response()->json([
-            'user'=>$user,
-            'token'=>$token
-        ]);
+            'message' => 'Email atau password salah'
+        ], 401);
+    }
+
+
+    $token = $user->createToken('token')->plainTextToken;
+
+    return response()->json([
+        'token' => $token
+    ]);
     }
 
     // 🔒 REGISTER (ADMIN ONLY)
     public function register(Request $r)
     {
-        if ($r->user()->role !== 'admin') {
-            return response()->json(['message'=>'Hanya admin'],403);
-        }
+       $r->validate([
+        'username' => 'required',
+        'email' => 'required|email|unique:users,email',
+        'password' => 'required|min:6',
+        'role' => 'required'
+    ]);
 
-        $user = User::create([
-            'username'=>$r->username,
-            'email'=>$r->email,
-            'password'=>bcrypt($r->password),
-            'role'=>$r->role
-        ]);
+    if ($r->user()->role !== 'admin') {
+        return response()->json([
+            'message' => 'Hanya admin yang dapat mendaftarkan user'
+        ], 403);
+    }
 
-        return response()->json($user);
+    $user = User::create([
+        'username' => $r->username,
+        'email' => $r->email,
+        'password' => bcrypt($r->password),
+        'role' => $r->role,
+    ]);
+
+    return response()
+        ->json([
+            'message' => 'User berhasil didaftarkan',
+            'data' => $user
+        ])
+        ->setStatusCode(201);
+
     }
 
     // 🚪 LOGOUT
@@ -48,6 +71,4 @@ class AuthController extends Controller
         $r->user()->tokens()->delete();
         return response()->json(['message'=>'Logout berhasil']);
     }
-
-
 }
