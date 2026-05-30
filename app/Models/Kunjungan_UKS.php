@@ -13,6 +13,8 @@ class Kunjungan_UKS extends Model
     protected $fillable = [
         'id_pasien',
         'id_user',
+        'Nama',
+        'Kelas',
         'keluhan',
         'penanganan',
         'jam_masuk',
